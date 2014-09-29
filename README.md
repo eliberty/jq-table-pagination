@@ -32,40 +32,63 @@ Exemple
 		}
 	];
 
-	  $(selector).tatable({
-	        maxPerPage: 2,
-	        datas: datasource,
-	        columnsToShow : ['Date', 'Amount', 'Action'],
-	        columns : [
-	            {
-	                template: function(object){
-	                    var date = new Date(object['createdAt']);
-	                    var dateString = date.toLocaleDateString();
-	                    return dateString;
-	                }
-	            },
-	            {
-	                template : function(object){
-	                    if(object['credit'] > 0){
-	                        return '<button class="btn btn-success">'+object['credit']+"</button>" ;
-	                    }
-	                    return '<button class="btn btn-warning">'+object['debit']+"</button>";
-	                }
-	            },
-	            {
-	                template : function(object){
-	                    return object['message'];
-	                }
-	            }
-	        ],
-	        css:{
-	            pagination:{
-	                ul:"pagination"
-	            }
-	        },
-	        debug:true
+	         $('#assets_paginated').tatable({
+                maxPerPage: 2,
+                datas: assets,
+                columnsToShow : [['Date', 'createdAt'], ['Points','credit'], ['Actions','message']],
+                columns : [
+                    {
+                        template: function(object){
+                            var date = new Date(object['createdAt']);
+                            var dateString = date.toLocaleDateString();
+                            return dateString;
+                        }
+                    },
+                    {
+                        template : function(object){
+                            if(object['credit'] > 0){
+                                return '<button class="btn btn-success">'+   numeral(parseFloat(object['credit']) / 100).format('0.00 $')    +"</button>" ;
+                            }
+                            return '<button class="btn btn-warning">'+  numeral(parseFloat(object['debit']) / 100).format('0.00 $')   +"</button>";
+                        }
+                    },
+                    {
+                        template : function(object){
+                            return object['message'];
+                        }
+                    }
+                ],
+                css:{
+                    pagination:{
+                        ul:"pagination"
+                    }
+                },
+                debug:true,
+                filters: {
+                    debit: function(datas){
+                        var filteredData= new Array();
+                        for(var i in datas){
+                            if(datas[i]['debit'] > 0){
+                                filteredData.push(datas[i]);
+                            }
+                        }
+                        return filteredData;
+                    },
+                    credit: function(datas){
+                        var filteredData= new Array();
+                        for(var i in datas){
+                            if(datas[i]['credit'] > 0){
+                                filteredData.push(datas[i]);
+                            }
+                        }
+                        return filteredData;
 
-	    });
+                    },
+                    none: function(datas){
+                        return datas;
+                    }
+                }
+            });
 </code>
 
 
@@ -76,23 +99,31 @@ Options
     var defaultOptions = {
         tableId : "tatable",
         datas : [],
+        spinner: true,
         showHeader : true,
+        sort: true,
         pagination : true,
         maxPerPage : 2,
         columnsToShow: null,
+        showFooter: false,
+        footer : null,
+        showPagination: true,
         css: {
-            table : " ",
-            header : " ",
+            table: " ",
+            header: " ",
             body: " ",
             footer:" ",
             tr:" ",
             td:" ",
             pagination: {
-                ul : "  ",
-                li : ""
+                ul: "  ",
+                li: ""
             }
         },
-        debug: false
+        debug: false,
+        paginationCallback: undefined,
+        filter: true,
+        filters: undefined
     };
 </code>
 
@@ -117,6 +148,15 @@ Definitions
 
 * css.pagination.ul : String - pagination ul class
 * css.pagination.li : String - pagination li class
+
+
+Filters
+=============
+Click on the following button will exectute the filter call "none"
+
+<code>
+	<button type="button" class="btn btn-default" tata-filter="none">{%trans%}rp.profil.assets.filter.all{%endtrans%}</button>
+</code>
 
 
 
