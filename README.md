@@ -1,7 +1,7 @@
-jQueryTatable
+jq Table Pagination
 =============
 
-Simple jQuery Table
+Simple jQuery Table with pagination, sort, filter, for json object
 
 
 
@@ -34,7 +34,7 @@ Exemple
 
 	         $('#assets_paginated').tatable({
                 maxPerPage: 2,
-                datas: assets,
+                datas: datasource,
                 columnsToShow : [['Date', 'createdAt'], ['Points','credit'], ['Actions','message']],
                 columns : [
                     {
