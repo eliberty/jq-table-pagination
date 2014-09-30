@@ -1,7 +1,5 @@
 /**
- * Created by Patrick Benard
- * 24/09/2014
- *
+ * Created by pbenard on 29/09/2014.
  */
 
 /**
@@ -10,6 +8,7 @@
  *     - Ajouter le footer utilisateur dans la construction de la table
  *     - Ajouter les setter/getter
  *     - Ajouter trigger avant/apres changement de page
+ *     - Ajouter critère de tri personnalisé
  */
 
 /**
@@ -19,6 +18,13 @@
 var tatableOptions = {};
 
 $.fn.tatable = function(options){
+
+    var container = $(this);
+    $spinner = $('<div class="tata-spinner"><i class="fa fa-spin fa-spinner fa-2x"></i></div>');
+
+    if( typeof tatableOptions[container] == 'undefined' ){
+        container.append($spinner);
+    }
 
     /**
      * Inner Functions used for methods or generation
@@ -38,9 +44,18 @@ $.fn.tatable = function(options){
              * Suppression de l'ancien body et creation d'un nouveau
              */
             innerFunction.log('Suppression du body actuel','color:blue;background:lightgrey', defaultOptions.debug);
-            $('.tata-body').remove();
-            innerFunction.log('Création du nouveau body', undefined, defaultOptions.debug);
+            if(defaultOptions.effects){
+                $('.tata-body').addClass('table-to-remove').fadeOut(defaultOptions.effectsDuration);
+                innerFunction.log('Création du nouveau body', undefined, defaultOptions.debug);
+                setTimeout(function(){
+                    $('.table-to-remove').remove();
+                },defaultOptions.effectsDuration);
+            } else {
+                $('.tata-body').remove();
+                innerFunction.log('Création du nouveau body', undefined, defaultOptions.debug);
+            }
             $tbody = $('<tbody></tbody>').addClass(innerVariables.css.body);
+
 
             /**
              * Pour chaque entité, on créait une ligne
@@ -146,7 +161,15 @@ $.fn.tatable = function(options){
             innerFunction.log(defaultOptions.datas, undefined, defaultOptions.debug);
             innerVariables.currentPage = 1;
             innerFunction.updatePagination();
-            $('.tata-table').append(  innerFunction.constructBody(innerVariables.currentPage)  );
+            if( defaultOptions.effects ){
+                var $newbody = innerFunction.constructBody(innerVariables.currentPage).hide();
+                $('.tata-table').append( $newbody);
+                setTimeout(function(){
+                    $newbody.fadeIn(defaultOptions.effectsDuration);
+                },defaultOptions.effectsDuration);
+            } else {
+                $('.tata-table').append(  innerFunction.constructBody(innerVariables.currentPage)  );
+            }
         },
         filter: function(filterName){
             innerFunction.log("Entrée dans innerFunction filter", undefined, defaultOptions.debug);
@@ -159,7 +182,20 @@ $.fn.tatable = function(options){
             innerFunction.log(defaultOptions.datas, undefined, defaultOptions.debug);
             innerVariables.currentPage = 1;
             innerFunction.updatePagination();
-            $('.tata-table').append(  innerFunction.constructBody(innerVariables.currentPage)  );
+
+
+            if( defaultOptions.effects ){
+                var $newbody = innerFunction.constructBody(innerVariables.currentPage).hide();
+                $('.tata-table').append( $newbody);
+                setTimeout(function(){
+                    $newbody.fadeIn(defaultOptions.effectsDuration);
+                },defaultOptions.effectsDuration);
+            } else {
+                $('.tata-table').append(  innerFunction.constructBody(innerVariables.currentPage)  );
+            }
+
+
+
             innerFunction.constructPagination();
         },
         constructPagination: function(){
@@ -189,22 +225,43 @@ $.fn.tatable = function(options){
              * Pagination Click
              */
             innerFunction.log("Création des evenements sur les liens de pagination",'color:blue;background:lightgrey', defaultOptions.debug);
-            $('li.pagination').on('click', function(e){
+            $('#'+defaultOptions.tableId+' li.pagination').on('click', function(e){
+
                 innerFunction.log('Click sur pagination','color:green;background:lightgrey', defaultOptions.debug);
+
+                if( typeof tatableOptions[container].processing != 'undefined' && tatableOptions[container].processing  == true ){
+                    return false;
+                }
+
+                tatableOptions[container].processing  = true;
+
                 innerVariables.currentPage = $(this).data('tata-page');
 
                 innerFunction.log('Page demandée : '+innerVariables.currentPage, undefined, defaultOptions.debug);
                 innerFunction.updatePagination();
-                $('.tata-table').append(  innerFunction.constructBody(innerVariables.currentPage)  );
+
+                if( defaultOptions.effects ){
+                    var $newbody = innerFunction.constructBody(innerVariables.currentPage).hide();
+                    setTimeout(function(){
+                        $('.tata-table').append(  $newbody  );
+                        $newbody.fadeIn(defaultOptions.effectsDuration);
+                        tatableOptions[container].processing  = false;
+                    }, defaultOptions.effectsDuration);
+                } else {
+                    $('.tata-table').append(  innerFunction.constructBody(innerVariables.currentPage)  );
+                    tatableOptions[container].processing  = false;
+                }
+
                 e.stopPropagation();
 
                 innerFunction.log("Fin d'action click sur pagination",'color:green;background:lightgrey', defaultOptions.debug);
                 $(this).trigger('pageChange');
+
+
             });
         }
     };
 
-    var container = $(this);
 
     /**
      * Methods
@@ -294,7 +351,9 @@ $.fn.tatable = function(options){
         debug: false,
         paginationCallback: undefined,
         filter: true,
-        filters: undefined
+        filters: undefined,
+        effects: true,
+        effectsDuration: 1000
     };
 
     /**
@@ -349,7 +408,6 @@ $.fn.tatable = function(options){
     $theader = $('<thead class="'+innerVariables.css.header+' '+defaultOptions.css.header+'"></thead>');
     $tbody = $('<tbody class="'+innerVariables.css.body+' '+defaultOptions.css.body+'"></tbody>');
     $tfoot = $('<tfoot class="'+innerVariables.css.footer+' '+defaultOptions.css.footer+'"></tfoot>');
-    $spinner = $('<div class="tata-spinner"><i class="fa fa-spin fa-spinner fa-2x"></i></div>');
 
     if(defaultOptions.spinner == true){
         innerFunction.spinner.show();
@@ -382,8 +440,16 @@ $.fn.tatable = function(options){
     innerFunction.log("Total des pages : "+innerVariables.totalPage,'color:purple;background:lightgrey', defaultOptions.debug);
 
     innerFunction.log("Page de construction demandée : "+innerVariables.currentPage,'color:green;background:lightgrey', defaultOptions.debug);
-    $table.append( innerFunction.constructBody(innerVariables.currentPage)  );
 
+    if( tatableOptions[$(this)].effects ){
+        innerFunction.log('Affichage avec effets du body');
+        var $newBody = innerFunction.constructBody(innerVariables.currentPage).hide();
+        $table.append( $newBody   );
+        $newBody.fadeIn(tatableOptions[$(this)].effectsDuration);
+    } else {
+        innerFunction.log('Affichage sans effets');
+        $table.append( innerFunction.constructBody(innerVariables.currentPage)   );
+    }
 
 
 
@@ -403,14 +469,23 @@ $.fn.tatable = function(options){
      */
     innerFunction.constructPagination();
     innerFunction.updatePagination();
+    $spinner.remove();
 
 
     /**
      * Sort on header Click
-      */
+     */
     if(defaultOptions.sort == true){
         innerFunction.log("Création de l'action filtre sur titre de colonne", undefined, defaultOptions.debug);
         $('[data-tata-sort]').on('click', function(){
+
+
+            if( typeof tatableOptions[container].processing != 'undefined' && tatableOptions[container].processing  == true ){
+                return false;
+            }
+
+            tatableOptions[container].processing = true;
+
             var sort = $(this).data('tata-sort');
             if(innerVariables.sortArg == sort){
                 innerFunction.log("Tri : Inversion du l'ordre", undefined, defaultOptions.debug);
@@ -425,6 +500,7 @@ $.fn.tatable = function(options){
                 innerFunction.log("Tri : Nouveau tri", undefined, defaultOptions.debug);
             }
             innerFunction.sortCol();
+            tatableOptions[container].processing = false;
         });
     }
 
@@ -434,7 +510,12 @@ $.fn.tatable = function(options){
     if(  defaultOptions.filter == true ){
         $('[tata-filter]').on('click', function(){
             innerFunction.log("Click sur filtre : "+ $(this).attr("tata-filter"), undefined, defaultOptions.debug);
+            if( typeof tatableOptions[container].processing != 'undefined' && tatableOptions[container].processing  == true ){
+                return false;
+            }
+            tatableOptions[container].processing = true;
             innerFunction.filter( $(this).attr("tata-filter")  );
+            tatableOptions[container].processing = false;
         });
     }
 };

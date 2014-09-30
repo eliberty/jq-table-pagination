@@ -127,6 +127,14 @@ Options
     };
 </code>
 
+Columns To Show
+=============
+<code>
+columnsToShow : [['Date', 'createdAt'], ['Points','credit'], ['Actions','message']],
+</code>
+
+['label', 'objectField_To_Sort']
+
 Definitions
 =============
 
