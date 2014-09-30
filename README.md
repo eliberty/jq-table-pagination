@@ -162,12 +162,6 @@ Filters
 =============
 Click on the following button will exectute the filter call "none"
 
-<code>
+
 	<button type="button" class="btn btn-default" tata-filter="none">{%trans%}rp.profil.assets.filter.all{%endtrans%}</button>
-</code>
-
-
-
-
-
 
